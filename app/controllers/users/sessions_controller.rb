@@ -11,5 +11,21 @@ module Users
       super
     end
 
+    # POST /resource/sign_in
+    def create
+      resource = User.find_for_database_authentication(email: users_params[:email])
+      if resource.present?
+        if resource.active
+          super
+        else
+          flash[:alert] = 'account is not active!!!'
+          redirect_to new_user_session_path
+        end
+      else
+        flash[:alert] = 'User Not Found!'
+        redirect_to new_user_session_path
+      end
+    end
+
   end
 end
