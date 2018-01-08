@@ -1,0 +1,28 @@
+require:
+  - rubocop-performance
+  - rubocop-rails
+AllCops:
+  TargetRubyVersion: 2.6
+  Exclude:
+    - '**/bin/*'
+    - '**/vendor/bundle/**/*'
+Metrics/LineLength:
+  Max: 90
+  Exclude:
+    - '**/db/schema.rb'
+Metrics/ClassLength:
+  Max: 120
+Metrics/BlockLength:
+  Exclude:
+    - '**/config/routes.rb'
+    - '**/config/environments/*'
+    - '**/config/initializers/*'
+    - '**/db/migrate/*'
+    - '**/db/schema.rb'
+    - '**/spec/**/*'
+Metrics/AbcSize:
+  Exclude:
+    - '**/db/migrate/*'
+Metrics/MethodLength:
+  Exclude:
+    - '**/db/migrate/*'
