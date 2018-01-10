@@ -30,6 +30,27 @@ module Account
       end
     end
 
+    def edit
+      business_title
+      @images = @business.gallery
+      @blobs = ActiveStorage::Blob.where(id: @images.pluck(:blob_id)) if @images.present?
+      if @blobs.present?
+        @existingFiles = []
+        @blobs.each do |image|
+          data = {}
+          data[:filename] = image['filename']
+          data[:size] = image.byte_size
+          data[:url] = url_for(image)
+          data[:key] = image.key
+          @existingFiles << data
+        end
+      end
+    end
+
+    def show
+      business_title
+    end
+
 
     private
 
