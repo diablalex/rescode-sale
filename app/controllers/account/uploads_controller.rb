@@ -18,6 +18,15 @@ module Account
       end
     end
 
+    def remove_image
+      set_image_blob
+      @image.attachments.each do |attachment|
+        audited_changes = attachment.as_json.except('id', 'created_at')
+        attachment.audits.create(associated_id: attachment.record_id, associated_type: attachment.record_type, user_id: params[:user_id], user_type: params[:type], action: 'destroy', audited_changes: audited_changes)
+        attachment.purge
+      end
+    end
+
     private
 
     def set_business
