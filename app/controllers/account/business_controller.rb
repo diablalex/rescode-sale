@@ -183,6 +183,36 @@ module Account
     end
 
     def cancel_subscription
+      subscription = BusinessPlan.find_by(id: params[:subscription_id])
+      if subscription.present?
+        begin
+          if subscription.stripe_subscription_id.present?
+            stripe_subscription = Stripe::Subscription.delete(subscription.stripe_subscription_id)
+            subscription.status      = stripe_subscription[:status]
+          else
+            subscription.status      = 'canceled'
+          end
+          if subscription.save
+            business = subscription.business
+            business.update(is_subscribe: false)
+            # if business.tag_misc == nil
+            #   business.tag_misc = {}
+            # end
+            # business.tag_misc['Update'] = '1'
+            # business.save
+            redirect_to account_business_index_path,
+                        notice: 'subscription will be canceled_at next payment date.'
+          else
+            redirect_to account_business_index_path,
+                        alert: 'Please try Again Later.'
+          end
+        rescue Stripe::StripeError => e
+          puts '=======ERROR=======StripeError========'
+          redirect_to account_business_index_path, alert: e.error[:message]
+        end
+      else
+        redirect_to account_business_index_path, alert: 'Subscription Not Found !!!!'
+      end
     end
 
     def business_sites
