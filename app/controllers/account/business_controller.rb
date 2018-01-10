@@ -135,6 +135,68 @@ module Account
       end
     end
 
+    def get_state
+      @states = CS.states(params[:country])
+      @selected_state = params[:state] if params[:state].present?
+    end
+
+    def categories
+      if params[:search].present?
+        @categories = Category.where('lower(name) LIKE ?', "%#{params[:search].downcase}%")
+        render json: @categories.map { |c| c.serializable_hash(only: %i[name name]) }
+      else
+        render json: Category.all.map { |c| c.serializable_hash(only: %i[name name]) }
+      end
+    end
+
+    def uploadfiles
+      if params[:id].present?
+        @business = current_user.businesses.find_by(id: params[:id])
+        if @business.present?
+          uploaded_pics = params[:file]
+          if uploaded_pics.present?
+            uploaded_pics.each do |pic|
+              @business.gallery.attach(io: pic.last, filename: pic.last.original_filename, content_type: 'image/jpg')
+            end
+          end
+          render json: { message: 'You have successfully uploded your images.' }
+        end
+      else
+        FileUtils.mkdir_p("public/images/user/#{current_user.id}/") unless File.exist?("public/images/user/#{current_user.id}")
+        session[:fil_name] = []
+        uploaded_pics = params[:file]
+        time_footprint = Time.now.to_i
+        if uploaded_pics.present?
+          uploaded_pics.each do |pic|
+            next if pic[1].blank?
+
+            File.open(Rails.root.join('public', 'images', 'user', current_user.id.to_s ,pic[1].original_filename), 'wb') do |file|
+              file.write(pic[1].read)
+              File.rename(file, "public/images/user/#{current_user.id}/" + pic[1].original_filename)
+              session[:fil_name] << pic[1].original_filename
+            end
+          end
+        end
+        files_list = Dir["public/images/user/#{current_user.id}/*"].to_json
+        render json: { message: 'You have successfully uploded your images.', files_list: files_list }
+      end
+    end
+
+    def cancel_subscription
+    end
+
+    def business_sites
+    end
+
+    def save_code
+    end
+
+    def invoice_details
+    end
+
+    def confirm_invoice
+    end
+
     private
 
     def set_business
