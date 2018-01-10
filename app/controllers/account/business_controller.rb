@@ -51,6 +51,46 @@ module Account
       business_title
     end
 
+    def create
+      @business = current_user.businesses.new(business_params)
+      files_name = session[:fil_name] if session[:fil_name].present?
+      if files_name.present?
+        files_name.each do |name|
+          url = Rails.root.join('public', 'images', 'user', current_user.id.to_s, name)
+          begin
+            @business.gallery.attach(io: File.open(url), filename: name)
+          rescue URI::InvalidURIError
+            puts '======URI::InvalidURIError========'
+          end
+        end
+      end
+      respond_to do |format|
+        if @business.save
+          session[:fil_name] = []
+          FileUtils.rm_rf("public/images/user/#{current_user.id}/")
+          if session['plan_' + current_user.id.to_s].present?
+            plan = Plan.find_by(id: session['plan_' + current_user.id.to_s])
+            session.delete('plan_' + current_user.id.to_s)
+          end
+          if plan.present?
+            format.html do
+              redirect_to checkout_account_subscriptions_path(business: @business.id,
+                                                              plan: plan.stripe_plan_id)
+            end
+          else
+            format.html do
+              redirect_to new_account_subscription_path(business: @business.id),
+                          notice: 'Business was successfully created'
+            end
+            format.json { render :show, status: :created, location: @business }
+          end
+        else
+          format.html { render :new, alert: @business.errors.full_messages.join(', ') }
+          format.json { render json: @business.errors, status: :unprocessable_entity }
+        end
+      end
+    end
+
 
     private
 
