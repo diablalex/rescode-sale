@@ -91,6 +91,49 @@ module Account
       end
     end
 
+    def update
+      respond_to do |format|
+        if @business.update(business_params)
+          if @business.tag_misc == nil
+            @business.tag_misc = {}
+          end
+          @business.tag_misc['Update'] = '1'
+          @business.save
+          format.html do
+            redirect_to account_business_index_path,
+                        notice: 'Business was successfully updated.'
+          end
+          format.json { render json: { type: request.params[:business].keys.join(',') } }
+        else
+          @images = @business.gallery
+          @blobs = ActiveStorage::Blob.where(id: @images.pluck(:blob_id)) if @images.present?
+          if @blobs.present?
+            @existingFiles = []
+            @blobs.each do |image|
+              data = {}
+              data[:filename] = image['filename']
+              data[:size] = image.byte_size
+              data[:url] = url_for(image)
+              data[:key] = image.key
+              @existingFiles << data
+            end
+          end
+          format.html { render :edit, alert: @business.errors.full_messages.join(', ') }
+          format.json { render json: @business.errors, status: :unprocessable_entity }
+        end
+      end
+    end
+
+    def destroy
+      @business.destroy
+      respond_to do |format|
+        format.html do
+          redirect_to account_business_index_path,
+                      notice: 'Business was successfully destroyed.'
+        end
+        format.json { head :no_content }
+      end
+    end
 
     private
 
