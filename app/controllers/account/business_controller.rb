@@ -216,9 +216,33 @@ module Account
     end
 
     def business_sites
+      business_title
+      @business_sites = @business.business_sites
     end
 
     def save_code
+      business_site = BusinessSite.find_by(id: params[:business_site][:id])
+      if business_site.present?
+        business_site.code = params[:business_site][:code]
+        business_site.status = 'Confirmation code submitted'
+        if business_site.save
+          redirect_to business_sites_account_business_path(id: params[:business_id]),
+                      notice: 'code updated successfully.'
+          business = business_site.business
+          if business.tag_misc == nil
+            business.tag_misc = {}
+          end
+          business.tag_misc.delete('Verification code - Fail') if business.tag_misc['Verification code - Fail'].present?
+          business.tag_misc['Verification code - Submitted'] = '1'
+          business.save
+        else
+          redirect_to business_sites_account_business_index_path,
+                      alert: 'Please try again later.'
+        end
+      else
+        redirect_to business_sites_account_business_index_path,
+                    alert: 'Site not found.'
+      end
     end
 
     def invoice_details
