@@ -21,5 +21,27 @@ module Account
       end
     end
 
+    def checkout
+      if @business.stripe_customer_id.blank?
+        customer = Stripe::Customer.create({email: @business.email})
+        @business.update(stripe_customer_id: customer.id)
+      end
+      session = Stripe::Checkout::Session.create(
+        customer: @business.stripe_customer_id,
+        payment_method_types: ['card'],
+        subscription_data: {
+          items: [{ plan: params[:plan] }]
+        },
+        success_url: account_business_index_url,
+        cancel_url: root_url
+      )
+      @session_id = session.id
+    end
+
+    def webhooks
+    end
+
+    private
+
   end
 end
