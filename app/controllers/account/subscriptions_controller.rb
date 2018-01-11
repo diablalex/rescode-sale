@@ -38,10 +38,32 @@ module Account
       @session_id = session.id
     end
 
-    def webhooks
-    end
 
     private
 
+    def check_business
+      if current_user.businesses.present?
+        if params[:business].present?
+          set_business
+        else
+          redirect_to account_business_index_path, alert: 'Business not found'
+        end
+      else
+        redirect_to account_business_index_path, alert: 'Business not found'
+      end
+    end
+
+    def set_business
+      @business = current_user.businesses.find_by(id: params[:business])
+      if @business.blank?
+        redirect_to account_business_index_path,
+                    alert: 'Business not found'
+      else
+        if @business.is_subscribe?
+          redirect_to account_business_index_path,
+                      alert: 'Already subscribed to this business'
+        end
+      end
+    end
   end
 end
