@@ -246,9 +246,29 @@ module Account
     end
 
     def invoice_details
+      invoice_title
+      build_condition :search, 'invoice_no', 'like', params[:search]
+      @invoices = current_user.user_invoices.where(@conditions).page(@page).per(@per_page)
     end
 
     def confirm_invoice
+      invoice_title
+      @invoice = UserInvoice.find_by(id: params[:id])
+      @user = @invoice.user
+      @company_setting = CompanySetting.last
+      respond_to do |format|
+        format.pdf do
+          render pdf: 'invoice',
+                 file: 'account/business/invoice_pdf.haml',
+                 layout: 'invoice_pdf',
+                 formats: :html,
+                 encoding: 'utf8',
+                 footer: {
+                  content: render_to_string({template: 'layouts/pdfs/footer.html.haml', layout: 'invoice_pdf'})
+                 },
+                 margin: {top: 10, bottom: 10}
+        end
+      end
     end
 
     private
