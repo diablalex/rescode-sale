@@ -88,6 +88,24 @@ module Admins
     end
 
 
+    def count_total_price(business_plan)
+      count = 0
+      if business_plan.partner_user_plan.yearly
+        if business_plan.expire_date.to_date < Time.zone.today
+          count = (business_plan.expire_date.year - business_plan.created_at.year) + 1
+        else
+          count = (Time.zone.now.year - business_plan.created_at.year) + 1
+        end
+      else
+        if business_plan.expire_date.to_date < Time.zone.today
+          count = ((business_plan.expire_date.year * 12 + business_plan.expire_date.month) - (business_plan.created_at.year * 12 + business_plan.created_at.month)) + 1
+        else
+          count = ((Time.zone.now.year * 12 + Time.zone.now.month) - (business_plan.created_at.year * 12 + business_plan.created_at.month)) + 1
+        end
+      end
+      business_plan.partner_user_plan.price * count
+    end
+
     def count_inr_partner_price(business_plan)
       count = 0
       if (@invoice_inr_price.present? && Time.new(business_plan.created_at.year, business_plan.created_at.month) > Time.new(@invoice_inr_price.end_date.year, @invoice_inr_price.end_date.month)) || @invoice_inr_price.blank?
