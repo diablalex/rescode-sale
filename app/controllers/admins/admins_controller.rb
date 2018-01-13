@@ -27,6 +27,32 @@ module Admins
 
     def edit; end
 
+    def update
+      respond_to do |format|
+        if @admin.update(admin_params)
+          format.html do
+            redirect_to admins_admins_path,
+                        notice: 'Admin was successfully updated.'
+          end
+          format.json { render json: { type: request.params[:admin].keys.join(',') } }
+        else
+          format.html { render :edit, alert: @admin.errors.full_messages.join(', ') }
+          format.json { render json: @admin.errors, status: :unprocessable_entity }
+        end
+      end
+    end
+
+    def show; end
+
+    def destroy
+      if @admin.destroy
+        flash[:notice] = 'Admin Deleted Successfully.!'
+        redirect_to admins_admins_path
+      else
+        flash[:error] = 'Failed to Delete admin!'
+        redirect_to admins_admins_path
+      end
+    end
 
     private
 
